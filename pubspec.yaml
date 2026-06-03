@@ -1,6 +1,6 @@
 name: light_result
 description: "A lightweight, zero-dependency functional error handling package for Dart 3. Built with sealed classes and pattern matching."
-version: 0.1.1
+version: 0.1.2
 homepage: https://github.com/mstdeveloper33/light_result
 repository: https://github.com/mstdeveloper33/light_result
 issue_tracker: https://github.com/mstdeveloper33/light_result/issues

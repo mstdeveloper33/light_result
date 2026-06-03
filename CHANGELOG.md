@@ -1,3 +1,8 @@
+## 0.1.2
+
+* Docs: Rewrote README with motivation section and real-world comparisons.
+* Docs: Rewrote example with 6 practical scenarios (login, API, validation, cache, Option, async chaining).
+
 ## 0.1.1
 
 * Fix: LICENSE file now uses standard MIT format recognized by pub.dev.
