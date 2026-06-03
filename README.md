@@ -6,6 +6,53 @@ Built entirely on **sealed classes** and **pattern matching** — the compiler f
 
 > \*Core library has zero dependencies. The optional `testing.dart` utilities depend on `matcher`.
 
+## The Problem
+
+Every Dart/Flutter project has the same pain points:
+
+```dart
+// ❌ Problem 1: Functions lie about what can go wrong
+Future<User> fetchUser(int id) async {
+  // Can throw SocketException, TimeoutException, FormatException,
+  // HttpException, JsonUnsupportedObjectError... but the signature says nothing.
+  final response = await http.get('/users/$id');
+  return User.fromJson(jsonDecode(response.body));
+}
+
+// ❌ Problem 2: Null means everything and nothing
+User? getUser() => null; // Not found? Error? Not loaded yet? Who knows.
+
+// ❌ Problem 3: try/catch spreads everywhere
+try {
+  final user = await fetchUser(1);
+  final profile = await fetchProfile(user);
+  final avatar = await downloadAvatar(profile);
+  // What if the 2nd call fails? The 3rd? Different error types?
+} catch (e) {
+  // All errors land here. Good luck distinguishing them.
+}
+```
+
+## The Solution
+
+```dart
+// ✅ Function signature tells the full story
+Future<Result<AppFailure, User>> fetchUser(int id) async { ... }
+
+// ✅ Compiler forces you to handle every case
+final widget = switch (await fetchUser(1)) {
+  Left(value: NetworkFailure(:final statusCode)) => ErrorView(code: statusCode),
+  Left(value: ValidationFailure(:final field)) => FormError(field: field),
+  Right(value: final user) => UserProfile(user: user),
+};
+
+// ✅ Clean async chains — no try/catch, no null checks
+final avatar = await fetchUser(1)
+    .thenFlatMap((user) => fetchProfile(user))
+    .thenMap((profile) => profile.avatarUrl)
+    .thenGetOrElse((_) => 'default_avatar.png');
+```
+
 ## Why light_result?
 
 | Feature | light_result | fpdart | dartz |
