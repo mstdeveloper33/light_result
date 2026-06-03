@@ -54,7 +54,7 @@ extension TaskResult<L, R> on Future<Result<L, R>> {
   }
 
   /// Chains an async computation that returns a [Result],
-  /// avoiding nested Future<Result<Result<...>>>.
+  /// avoiding nested `Future<Result<Result<...>>>`.
   ///
   /// ```dart
   /// final profile = await fetchUser()

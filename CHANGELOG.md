@@ -1,3 +1,10 @@
+## 0.1.1
+
+* Fix: LICENSE file now uses standard MIT format recognized by pub.dev.
+* Fix: Resolved `unintended_html_in_doc_comment` warning in TaskResult docs.
+* Added `Unit` type for void-returning Result operations.
+* Added `Either<L, R>` type alias for fpdart/dartz migration.
+
 ## 0.1.0
 
 * Initial release.
