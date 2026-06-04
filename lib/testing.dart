@@ -8,9 +8,9 @@
 /// import 'package:test/test.dart';
 ///
 /// void main() {
-///   test('returns Right', () {
-///     expect(fetchUser(1), isRight);
-///     expect(fetchUser(1), isRightWith(expectedUser));
+///   test('returns Success', () {
+///     expect(fetchUser(1), isSuccess);
+///     expect(fetchUser(1), isSuccessWith(expectedUser));
 ///   });
 /// }
 /// ```

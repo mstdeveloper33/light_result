@@ -1,12 +1,12 @@
-/// A lightweight, zero-dependency functional error handling library for Dart 3.
+/// A lightweight functional error handling library for Dart 3.
 ///
-/// Built entirely on modern Dart 3 features: sealed classes, pattern matching,
-/// records, and exhaustive checking. Provides production-grade functional
-/// error handling without the complexity of category theory.
+/// The core library (`package:light_result/light_result.dart`) has **zero dependencies**.
+/// Optional test matchers are available via `package:light_result/testing.dart`
+/// (depends on `matcher`).
 ///
 /// ## Core Types
 ///
-/// - [Result] — Represents either a success ([Right]) or failure ([Left]).
+/// - [Result] — Represents either a success ([Success]) or failure ([Failure]).
 /// - [Option] — Represents an optional value ([Some]) or absence ([None]).
 ///
 /// ## Quick Start
@@ -15,19 +15,19 @@
 /// import 'package:light_result/light_result.dart';
 ///
 /// // Creating results
-/// final success = Right<String, int>(42);
-/// final failure = Left<String, int>('Something went wrong');
+/// final success = Success<String, int>(42);
+/// final failure = Failure<String, int>('Something went wrong');
 ///
 /// // Pattern matching (exhaustive)
 /// final message = switch (success) {
-///   Left(value: final error) => 'Error: $error',
-///   Right(value: final data) => 'Data: $data',
+///   Failure(value: final error) => 'Error: $error',
+///   Success(value: final data) => 'Data: $data',
 /// };
 ///
 /// // Functional chaining
-/// final result = Right<String, int>(10)
+/// final result = Success<String, int>(10)
 ///     .map((x) => x * 2)
-///     .flatMap((x) => x > 0 ? Right(x) : Left('negative'));
+///     .flatMap((x) => x > 0 ? Success(x) : Failure('negative'));
 /// ```
 library;
 

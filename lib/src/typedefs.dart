@@ -7,9 +7,9 @@ import '../light_result.dart';
 /// ```dart
 /// ResultOf<int> parseInt(String s) {
 ///   try {
-///     return Right(int.parse(s));
+///     return Success(int.parse(s));
 ///   } on FormatException catch (e) {
-///     return Left(e);
+///     return Failure(e);
 ///   }
 /// }
 /// ```
@@ -21,13 +21,13 @@ typedef ResultOf<T> = Result<Exception, T>;
 ///
 /// ```dart
 /// StringResult<int> divide(int a, int b) {
-///   if (b == 0) return Left('Cannot divide by zero');
-///   return Right(a ~/ b);
+///   if (b == 0) return Failure('Cannot divide by zero');
+///   return Success(a ~/ b);
 /// }
 /// ```
 typedef StringResult<T> = Result<String, T>;
 
-/// A [Result] where the failure type is a custom [Failure] class.
+/// A [Result] where the failure type is a custom [AppError] class.
 ///
 /// For production applications using a typed failure hierarchy:
 ///
@@ -40,7 +40,7 @@ typedef StringResult<T> = Result<String, T>;
 ///
 /// AppResult<User> fetchUser(int id) async { ... }
 /// ```
-typedef AppResult<T> = Result<Failure, T>;
+typedef AppResult<T> = Result<AppError, T>;
 
 /// A [Future] returning a [Result].
 ///
@@ -49,7 +49,7 @@ typedef AppResult<T> = Result<Failure, T>;
 /// ```dart
 /// AsyncResult<String, User> fetchUser(int id) async {
 ///   // ...
-///   return Right(user);
+///   return Success(user);
 /// }
 /// ```
 typedef AsyncResult<L, R> = Future<Result<L, R>>;
@@ -67,8 +67,8 @@ typedef AsyncResultOf<T> = Future<Result<Exception, T>>;
 ///
 /// ```dart
 /// Either<String, int> divide(int a, int b) {
-///   if (b == 0) return Left('Division by zero');
-///   return Right(a ~/ b);
+///   if (b == 0) return Failure('Division by zero');
+///   return Success(a ~/ b);
 /// }
 /// ```
 typedef Either<L, R> = Result<L, R>;
@@ -77,19 +77,19 @@ typedef Either<L, R> = Result<L, R>;
 ///
 /// Use [Unit] instead of `void` when you need a [Result] that signals
 /// success without carrying data. Since `void` cannot be used as a type
-/// argument, `Result<Failure, void>` is invalid — use `Result<Failure, Unit>`.
+/// argument, `Result<AppError, void>` is invalid — use `Result<AppError, Unit>`.
 ///
 /// ```dart
-/// Result<AppFailure, Unit> deleteUser(int id) {
-///   if (id <= 0) return Left(ValidationFailure('Invalid id'));
+/// Result<AppError, Unit> deleteUser(int id) {
+///   if (id <= 0) return Failure(ValidationFailure('Invalid id'));
 ///   database.delete(id);
-///   return Right(unit);
+///   return Success(unit);
 /// }
 ///
 /// // Pattern matching still works
 /// switch (deleteUser(1)) {
-///   case Left(value: final err) => print('Failed: ${err.message}'),
-///   case Right() => print('Deleted successfully'),
+///   case Failure(value: final err) => print('Failed: ${err.message}'),
+///   case Success() => print('Deleted successfully'),
 /// }
 /// ```
 final class Unit {
@@ -110,7 +110,7 @@ final class Unit {
 /// ```dart
 /// Result<String, Unit> save(Data data) {
 ///   repository.save(data);
-///   return Right(unit);
+///   return Success(unit);
 /// }
 /// ```
 const unit = Unit._();
@@ -121,7 +121,7 @@ const unit = Unit._();
 /// Using sealed subclasses enables exhaustive pattern matching on error types.
 ///
 /// ```dart
-/// sealed class AppFailure extends Failure {
+/// sealed class AppFailure extends AppError {
 ///   const AppFailure(super.message, {super.stackTrace});
 /// }
 ///
@@ -138,25 +138,25 @@ const unit = Unit._();
 /// // Exhaustive error handling
 /// final result = await fetchUser(1);
 /// final message = switch (result) {
-///   Left(value: NetworkFailure(:final statusCode)) => 'Network: $statusCode',
-///   Left(value: ValidationFailure(:final field)) => 'Invalid: $field',
-///   Right(value: final user) => 'Hello, ${user.name}!',
+///   Failure(value: NetworkFailure(:final statusCode)) => 'Network: $statusCode',
+///   Failure(value: ValidationFailure(:final field)) => 'Invalid: $field',
+///   Success(value: final user) => 'Hello, ${user.name}!',
 /// };
 /// ```
-class Failure {
+class AppError {
   /// Human-readable description of the failure.
   final String message;
 
   /// Optional stack trace captured at the point of failure.
   final StackTrace? stackTrace;
 
-  /// Creates a [Failure] with a [message] and optional [stackTrace].
-  const Failure(this.message, {this.stackTrace});
+  /// Creates an [AppError] with a [message] and optional [stackTrace].
+  const AppError(this.message, {this.stackTrace});
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is Failure &&
+      (other is AppError &&
           other.runtimeType == runtimeType &&
           other.message == message);
 
@@ -166,3 +166,13 @@ class Failure {
   @override
   String toString() => '$runtimeType($message)';
 }
+
+// ─── Deprecated Aliases (Migration) ──────────────────────────────────────────
+
+/// Deprecated: Use [Failure] instead.
+@Deprecated('Use Failure instead. Will be removed in v1.0.0')
+typedef Left<L, R> = Failure<L, R>;
+
+/// Deprecated: Use [Success] instead.
+@Deprecated('Use Success instead. Will be removed in v1.0.0')
+typedef Right<L, R> = Success<L, R>;

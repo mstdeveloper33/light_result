@@ -169,12 +169,12 @@ sealed class Option<T> {
 
   /// Converts this [Option] to a [Result].
   ///
-  /// - [Some] becomes [Right] containing the value.
-  /// - [None] becomes [Left] containing the result of [onNone].
+  /// - [Some] becomes [Success] containing the value.
+  /// - [None] becomes [Failure] containing the result of [onNone].
   ///
   /// ```dart
-  /// Some(42).toResult(() => 'missing');    // Right(42)
-  /// None<int>().toResult(() => 'missing'); // Left('missing')
+  /// Some(42).toResult(() => 'missing');    // Success(42)
+  /// None<int>().toResult(() => 'missing'); // Failure('missing')
   /// ```
   Result<L, T> toResult<L>(L Function() onNone);
 
@@ -225,7 +225,7 @@ final class Some<T> extends Option<T> {
   T? toNullable() => value;
 
   @override
-  Result<L, T> toResult<L>(L Function() onNone) => Right<L, T>(value);
+  Result<L, T> toResult<L>(L Function() onNone) => Success<L, T>(value);
 
   @override
   Option<T> filter(bool Function(T t) predicate) =>
@@ -274,7 +274,7 @@ final class None<T> extends Option<T> {
   T? toNullable() => null;
 
   @override
-  Result<L, T> toResult<L>(L Function() onNone) => Left<L, T>(onNone());
+  Result<L, T> toResult<L>(L Function() onNone) => Failure<L, T>(onNone());
 
   @override
   Option<T> filter(bool Function(T t) predicate) => this;

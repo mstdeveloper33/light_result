@@ -16,7 +16,7 @@ import '../light_result.dart';
 /// // Verbose — must await each step
 /// final userResult = await fetchUser();
 /// final profileResult = await userResult.fold(
-///   (err) async => Left(err),
+///   (err) async => Failure(err),
 ///   (user) => fetchProfile(user),
 /// );
 /// ```
@@ -29,28 +29,28 @@ import '../light_result.dart';
 ///     .thenFlatMap((name) => fetchProfile(name));
 /// ```
 extension TaskResult<L, R> on Future<Result<L, R>> {
-  /// Transforms the [Right] value inside the [Future] using [f].
+  /// Transforms the [Success] value inside the [Future] using [f].
   ///
   /// ```dart
-  /// Future<Result<String, int>> fetchAge() async => Right(25);
+  /// Future<Result<String, int>> fetchAge() async => Success(25);
   ///
   /// final doubled = await fetchAge().thenMap((age) => age * 2);
-  /// // Right(50)
+  /// // Success(50)
   /// ```
   Future<Result<L, R2>> thenMap<R2>(R2 Function(R r) f) async {
     final result = await this;
     return result.map(f);
   }
 
-  /// Transforms the [Left] value inside the [Future] using [f].
+  /// Transforms the [Failure] value inside the [Future] using [f].
   ///
   /// ```dart
   /// final mapped = await fetchData()
-  ///     .thenMapLeft((err) => 'Wrapped: $err');
+  ///     .thenMapFailure((err) => 'Wrapped: $err');
   /// ```
-  Future<Result<L2, R>> thenMapLeft<L2>(L2 Function(L l) f) async {
+  Future<Result<L2, R>> thenMapFailure<L2>(L2 Function(L l) f) async {
     final result = await this;
-    return result.mapLeft(f);
+    return result.mapFailure(f);
   }
 
   /// Chains an async computation that returns a [Result],
@@ -65,12 +65,12 @@ extension TaskResult<L, R> on Future<Result<L, R>> {
   ) async {
     final result = await this;
     return switch (result) {
-      Left<L, R>(value: final l) => Left<L, R2>(l),
-      Right<L, R>(value: final r) => await f(r),
+      Failure<L, R>(value: final l) => Failure<L, R2>(l),
+      Success<L, R>(value: final r) => await f(r),
     };
   }
 
-  /// Applies [onLeft] or [onRight] to produce a single value.
+  /// Applies [onFailure] or [onSuccess] to produce a single value.
   ///
   /// ```dart
   /// final message = await fetchUser().thenFold(
@@ -79,14 +79,14 @@ extension TaskResult<L, R> on Future<Result<L, R>> {
   /// );
   /// ```
   Future<W> thenFold<W>(
-    W Function(L l) onLeft,
-    W Function(R r) onRight,
+    W Function(L l) onFailure,
+    W Function(R r) onSuccess,
   ) async {
     final result = await this;
-    return result.fold(onLeft, onRight);
+    return result.fold(onFailure, onSuccess);
   }
 
-  /// Returns the [Right] value or [defaultValue] if [Left].
+  /// Returns the [Success] value or [defaultValue] if [Failure].
   ///
   /// ```dart
   /// final name = await fetchUser()
@@ -97,7 +97,7 @@ extension TaskResult<L, R> on Future<Result<L, R>> {
     return result.getOrElse(defaultValue);
   }
 
-  /// Executes [action] on the [Right] value without transforming it.
+  /// Executes [action] on the [Success] value without transforming it.
   ///
   /// ```dart
   /// final user = await fetchUser()
@@ -109,30 +109,30 @@ extension TaskResult<L, R> on Future<Result<L, R>> {
     return result.tap(action);
   }
 
-  /// Executes [action] on the [Left] value without transforming it.
+  /// Executes [action] on the [Failure] value without transforming it.
   ///
   /// ```dart
   /// final user = await fetchUser()
-  ///     .thenTapLeft((err) => logger.error(err));
+  ///     .thenTapFailure((err) => logger.error(err));
   /// ```
-  Future<Result<L, R>> thenTapLeft(void Function(L l) action) async {
+  Future<Result<L, R>> thenTapFailure(void Function(L l) action) async {
     final result = await this;
-    return result.tapLeft(action);
+    return result.tapFailure(action);
   }
 
-  /// Recovers from a [Left] by trying an alternative computation.
+  /// Recovers from a [Failure] by trying an alternative computation.
   ///
   /// ```dart
   /// final data = await fetchFromNetwork()
   ///     .thenOrElse((err) async => fetchFromCache());
   /// ```
   Future<Result<L2, R>> thenOrElse<L2>(
-    FutureOr<Result<L2, R>> Function(L l) onLeft,
+    FutureOr<Result<L2, R>> Function(L l) onFailure,
   ) async {
     final result = await this;
     return switch (result) {
-      Left<L, R>(value: final l) => await onLeft(l),
-      Right<L, R>(value: final r) => Right<L2, R>(r),
+      Failure<L, R>(value: final l) => await onFailure(l),
+      Success<L, R>(value: final r) => Success<L2, R>(r),
     };
   }
 }

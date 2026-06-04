@@ -1,10 +1,15 @@
 # light_result
 
-A lightweight, zero-dependency\* functional error handling package for Dart 3.
+A lightweight functional error handling package for Dart 3.
 
 Built entirely on **sealed classes** and **pattern matching** — the compiler forces you to handle every case. No category theory. No boilerplate. Just safe, composable error handling.
 
-> \*Core library has zero dependencies. The optional `testing.dart` utilities depend on `matcher`.
+## Dependencies
+
+| Import | Dependencies | Purpose |
+|--------|:---:|---|
+| `package:light_result/light_result.dart` | **Zero** | Core library — all you need in production code |
+| `package:light_result/testing.dart` | `matcher` | Optional test matchers for assertions |
 
 ## The Problem
 
@@ -41,9 +46,9 @@ Future<Result<AppFailure, User>> fetchUser(int id) async { ... }
 
 // ✅ Compiler forces you to handle every case
 final widget = switch (await fetchUser(1)) {
-  Left(value: NetworkFailure(:final statusCode)) => ErrorView(code: statusCode),
-  Left(value: ValidationFailure(:final field)) => FormError(field: field),
-  Right(value: final user) => UserProfile(user: user),
+  Failure(value: NetworkFailure(:final statusCode)) => ErrorView(code: statusCode),
+  Failure(value: ValidationFailure(:final field)) => FormError(field: field),
+  Success(value: final user) => UserProfile(user: user),
 };
 
 // ✅ Clean async chains — no try/catch, no null checks
@@ -58,7 +63,7 @@ final avatar = await fetchUser(1)
 | Feature | light_result | fpdart | dartz |
 |---------|:---:|:---:|:---:|
 | Dart 3 sealed classes | ✅ | ✅ | ❌ |
-| Zero dependencies | ✅ | ❌ | ❌ |
+| Zero runtime dependencies | ✅ | ❌ | ❌ |
 | Exhaustive pattern matching | ✅ | ✅ | ❌ |
 | Lightweight API | ✅ | ❌ | ❌ |
 | Full documentation | ✅ | ✅ | ❌ |
@@ -70,7 +75,7 @@ final avatar = await fetchUser(1)
 
 ```yaml
 dependencies:
-  light_result: ^0.1.0
+  light_result: ^0.2.0
 ```
 
 ## Quick Start
@@ -80,15 +85,15 @@ import 'package:light_result/light_result.dart';
 
 // Define a function that can fail
 Result<String, int> divide(int a, int b) {
-  if (b == 0) return Left('Division by zero');
-  return Right(a ~/ b);
+  if (b == 0) return Failure('Division by zero');
+  return Success(a ~/ b);
 }
 
 // Exhaustive pattern matching — compiler ensures both cases are handled
 final result = divide(10, 2);
 final message = switch (result) {
-  Left(value: final error) => 'Error: $error',
-  Right(value: final data) => 'Result: $data',
+  Failure(value: final error) => 'Error: $error',
+  Success(value: final data) => 'Result: $data',
 };
 ```
 
@@ -96,14 +101,16 @@ final message = switch (result) {
 
 ### Result<L, R>
 
-Represents either a **failure** (`Left<L>`) or **success** (`Right<R>`).
+Represents either a **failure** (`Failure<L>`) or **success** (`Success<R>`).
 
 ```dart
 // Creating results
-final success = Right<String, int>(42);
-final failure = Left<String, int>('Something went wrong');
+final success = Success<String, int>(42);
+final failure = Failure<String, int>('Something went wrong');
 
 // Factory constructors
+final result = Result<String, int>.success(42);
+final error = Result<String, int>.failure('oops');
 final fromNull = Result<String, int>.fromNullable(json['age'], () => 'missing');
 final guarded = Result.guard(() => int.parse(input), (e, s) => 'Parse error: $e');
 ```
@@ -130,9 +137,9 @@ Result<String, int> parse(String s) =>
     Result.guard(() => int.parse(s), (e, _) => 'Invalid number');
 
 Result<String, int> validate(int n) =>
-    n > 0 ? Right(n) : Left('Must be positive');
+    n > 0 ? Success(n) : Failure('Must be positive');
 
-// Chain operations — short-circuits on first Left
+// Chain operations — short-circuits on first Failure
 final result = parse('42')
     .flatMap(validate)
     .map((n) => n * 2)
@@ -154,7 +161,7 @@ Future<Result<AppError, Profile>> fetchProfile(User user) async { ... }
 final profile = await fetchUser(1)
     .thenFlatMap((user) => fetchProfile(user))
     .thenMap((profile) => profile.avatar)
-    .thenTapLeft((err) => logger.error(err));
+    .thenTapFailure((err) => logger.error(err));
 ```
 
 ## Guard & Combine
@@ -177,7 +184,7 @@ final combined = Result.combine([
   validateName(name),
   validateEmail(email),
   validateAge(age),
-]); // Right([name, email, age]) or first Left
+]); // Success([name, email, age]) or first Failure
 
 // Parallel async
 final users = await Result.waitAll([
@@ -187,10 +194,10 @@ final users = await Result.waitAll([
 ]);
 ```
 
-## Typed Failure Hierarchies
+## Typed Error Hierarchies
 
 ```dart
-sealed class AppFailure extends Failure {
+sealed class AppFailure extends AppError {
   const AppFailure(super.message, {super.stackTrace});
 }
 
@@ -207,9 +214,9 @@ final class ValidationFailure extends AppFailure {
 // Exhaustive error handling with typed failures
 final result = await fetchUser(1);
 final widget = switch (result) {
-  Left(value: NetworkFailure(:final statusCode)) => ErrorWidget('Network: $statusCode'),
-  Left(value: ValidationFailure(:final field)) => ErrorWidget('Invalid: $field'),
-  Right(value: final user) => UserWidget(user),
+  Failure(value: NetworkFailure(:final statusCode)) => ErrorWidget('Network: $statusCode'),
+  Failure(value: ValidationFailure(:final field)) => ErrorWidget('Invalid: $field'),
+  Success(value: final user) => UserWidget(user),
 };
 ```
 
@@ -219,7 +226,7 @@ final widget = switch (result) {
 // Shorthand types for common patterns
 typedef ResultOf<T> = Result<Exception, T>;
 typedef StringResult<T> = Result<String, T>;
-typedef AppResult<T> = Result<Failure, T>;
+typedef AppResult<T> = Result<AppError, T>;
 typedef AsyncResult<L, R> = Future<Result<L, R>>;
 typedef AsyncResultOf<T> = Future<Result<Exception, T>>;
 ```
@@ -232,15 +239,15 @@ import 'package:light_result/testing.dart';
 test('returns user on success', () async {
   final result = await repository.fetchUser(1);
   
-  expect(result, isRight);
-  expect(result, isRightWith(expectedUser));
+  expect(result, isSuccess);
+  expect(result, isSuccessWith(expectedUser));
 });
 
 test('returns failure on error', () async {
   final result = await repository.fetchUser(-1);
   
-  expect(result, isLeft);
-  expect(result, isLeftWith(NetworkFailure('Not found')));
+  expect(result, isFailure);
+  expect(result, isFailureWith(NetworkFailure('Not found')));
 });
 
 test('option matchers', () {
@@ -255,13 +262,32 @@ test('option matchers', () {
 | fpdart/dartz | light_result |
 |---|---|
 | `Either<L, R>` | `Result<L, R>` |
-| `Either.right(value)` | `Right(value)` |
-| `Either.left(error)` | `Left(error)` |
+| `Either.right(value)` | `Success(value)` |
+| `Either.left(error)` | `Failure(error)` |
 | `Either.tryCatch(...)` | `Result.guard(...)` |
 | `Option.of(value)` | `Some(value)` |
 | `Option.none()` | `None()` |
 | `TaskEither` | `Future<Result<L, R>>` + extensions |
-| `.match(onLeft, onRight)` | `.fold(onLeft, onRight)` or `switch` |
+| `.match(onLeft, onRight)` | `.fold(onFailure, onSuccess)` or `switch` |
+
+## Migration from v0.1.x
+
+v0.2.0 renamed the core types for clarity:
+
+| v0.1.x | v0.2.0 |
+|---|---|
+| `Left(error)` | `Failure(error)` |
+| `Right(value)` | `Success(value)` |
+| `.isLeft` | `.isFailure` |
+| `.isRight` | `.isSuccess` |
+| `.mapLeft(f)` | `.mapFailure(f)` |
+| `.getLeftOrNull()` | `.getFailureOrNull()` |
+| `.tapLeft(f)` | `.tapFailure(f)` |
+| `.thenMapLeft(f)` | `.thenMapFailure(f)` |
+| `.thenTapLeft(f)` | `.thenTapFailure(f)` |
+| `class Failure` | `class AppError` |
+
+Deprecated `Left`/`Right` type aliases are still available for gradual migration.
 
 ## License
 

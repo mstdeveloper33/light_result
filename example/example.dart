@@ -11,7 +11,7 @@ import 'package:light_result/light_result.dart';
 // ─── STEP 1: Define Your Failure Types ────────────────────────────────────────
 // Create a sealed failure hierarchy — the compiler will force exhaustive handling
 
-sealed class AppFailure extends Failure {
+sealed class AppFailure extends AppError {
   const AppFailure(super.message, {super.stackTrace});
 }
 
@@ -71,24 +71,24 @@ Future<Result<AppFailure, Session>> login(
 
   // Simulate different outcomes
   if (email.isEmpty || password.isEmpty) {
-    return Left(
+    return Failure(
         const ValidationFailure('Credentials required', field: 'email'));
   }
   if (password.length < 6) {
-    return Left(
+    return Failure(
         const ValidationFailure('Password too short', field: 'password'));
   }
   if (email == 'blocked@test.com') {
-    return Left(const AuthFailure('Account is blocked'));
+    return Failure(const AuthFailure('Account is blocked'));
   }
 
   // Simulate network failure
   if (email == 'timeout@test.com') {
-    return Left(const NetworkFailure('Connection timed out', statusCode: 408));
+    return Failure(const NetworkFailure('Connection timed out', statusCode: 408));
   }
 
   // Success!
-  return Right(Session(
+  return Success(Session(
     token: 'jwt_token_123',
     user: User(id: 1, name: 'John Doe', email: email, age: 28),
   ));
@@ -99,10 +99,10 @@ Future<Result<AppFailure, User>> fetchUserProfile(String token) async {
   await Future<void>.delayed(const Duration(milliseconds: 50));
 
   if (token.isEmpty) {
-    return Left(const AuthFailure('Token expired'));
+    return Failure(const AuthFailure('Token expired'));
   }
 
-  return Right(
+  return Success(
       const User(id: 1, name: 'John Doe', email: 'john@test.com', age: 28));
 }
 
@@ -111,26 +111,26 @@ Future<Result<AppFailure, User>> fetchUserProfile(String token) async {
 
 Result<AppFailure, String> validateEmail(String email) {
   if (email.isEmpty) {
-    return Left(
+    return Failure(
         const ValidationFailure('Email is required', field: 'email'));
   }
   if (!email.contains('@')) {
-    return Left(
+    return Failure(
         const ValidationFailure('Invalid email format', field: 'email'));
   }
-  return Right(email);
+  return Success(email);
 }
 
 Result<AppFailure, String> validatePassword(String password) {
   if (password.isEmpty) {
-    return Left(const ValidationFailure('Password is required',
+    return Failure(const ValidationFailure('Password is required',
         field: 'password'));
   }
   if (password.length < 6) {
-    return Left(const ValidationFailure('Min 6 characters',
+    return Failure(const ValidationFailure('Min 6 characters',
         field: 'password'));
   }
-  return Right(password);
+  return Success(password);
 }
 
 Result<AppFailure, int> validateAge(String ageStr) {
@@ -138,8 +138,8 @@ Result<AppFailure, int> validateAge(String ageStr) {
     () => int.parse(ageStr),
     (_, __) => const ParseFailure('Invalid age format'),
   ).flatMap((age) => age >= 18
-      ? Right(age)
-      : Left(const ValidationFailure('Must be 18+', field: 'age')));
+      ? Success(age)
+      : Failure(const ValidationFailure('Must be 18+', field: 'age')));
 }
 
 // ─── STEP 5: Use Case / Business Logic Layer ─────────────────────────────────
@@ -155,7 +155,7 @@ Future<Result<AppFailure, Session>> loginUseCase(
 
   // If validation fails, return the first error immediately
   return validation.fold(
-    (failure) async => Left(failure),
+    (failure) async => Failure(failure),
     (values) => login(values[0], values[1]),
   );
 }
@@ -189,15 +189,15 @@ void main() async {
   // Successful login
   final loginResult = await loginUseCase('john@test.com', 'secret123');
   switch (loginResult) {
-    case Left(value: ValidationFailure(:final field, :final message)):
+    case Failure(value: ValidationFailure(:final field, :final message)):
       print('❌ Validation Error on "$field": $message');
-    case Left(value: AuthFailure(:final message)):
+    case Failure(value: AuthFailure(:final message)):
       print('🔒 Auth Error: $message');
-    case Left(value: NetworkFailure(:final statusCode, :final message)):
+    case Failure(value: NetworkFailure(:final statusCode, :final message)):
       print('🌐 Network Error ($statusCode): $message');
-    case Left(value: final other):
+    case Failure(value: final other):
       print('⚠️ Unexpected: ${other.message}');
-    case Right(value: final session):
+    case Success(value: final session):
       print('✅ Logged in as: ${session.user.name}');
       print('   Token: ${session.token}');
   }
@@ -217,7 +217,7 @@ void main() async {
       .thenMap((session) => session.token)
       .thenFlatMap((token) => fetchUserProfile(token))
       .thenMap((user) => user.name)
-      .thenTapLeft((err) => print('   [LOG] Error: ${err.message}'))
+      .thenTapFailure((err) => print('   [LOG] Error: ${err.message}'))
       .thenGetOrElse((_) => 'Anonymous');
 
   print('User name: $userName');
@@ -306,7 +306,7 @@ void main() async {
   Result<AppFailure, Unit> saveToDatabase(User user) {
     // Simulate save
     print('   [DB] Saving ${user.name}...');
-    return Right(unit); // Success, no meaningful return value
+    return Success(unit); // Success, no meaningful return value
   }
 
   final saveResult = saveToDatabase(

@@ -1,3 +1,23 @@
+## 0.2.0 — Breaking: Success/Failure Rename
+
+### Breaking Changes
+
+* **Renamed core types**: `Left` → `Failure`, `Right` → `Success`.
+* **Renamed getters**: `isLeft` → `isFailure`, `isRight` → `isSuccess`.
+* **Renamed methods**: `mapLeft` → `mapFailure`, `getLeftOrNull` → `getFailureOrNull`, `tapLeft` → `tapFailure`.
+* **Renamed async extensions**: `thenMapLeft` → `thenMapFailure`, `thenTapLeft` → `thenTapFailure`.
+* **Renamed matchers**: `isLeft` → `isFailure`, `isRight` → `isSuccess`, `isLeftWith` → `isFailureWith`, `isRightWith` → `isSuccessWith`.
+* **Renamed utility class**: `Failure` → `AppError` (to avoid conflict with the new `Failure` sealed subclass).
+* **Removed** `Result.left()` and `Result.right()` factory constructors (use `Result.failure()` / `Result.success()`).
+
+### Migration
+
+Deprecated `Left<L, R>` and `Right<L, R>` type aliases are provided for gradual migration. See README for full migration table.
+
+### Why?
+
+Dart developers coming from Rust/Kotlin expect `Ok`/`Err` or `Success`/`Failure` terminology. The old `Left`/`Right` naming (Haskell/Scala Either convention) was a barrier to adoption. The new names are self-documenting — no mnemonic needed.
+
 ## 0.1.2
 
 * Docs: Rewrote README with motivation section and real-world comparisons.

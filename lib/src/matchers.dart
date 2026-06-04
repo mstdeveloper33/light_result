@@ -3,36 +3,36 @@ import 'package:matcher/matcher.dart';
 import 'option.dart';
 import 'result.dart';
 
-/// A matcher that verifies a [Result] is [Right].
+/// A matcher that verifies a [Result] is [Success].
 ///
 /// ```dart
-/// expect(Right(42), isRight);
-/// expect(Left('error'), isNot(isRight));
+/// expect(Success(42), isSuccess);
+/// expect(Failure('error'), isNot(isSuccess));
 /// ```
-const Matcher isRight = _IsRight();
+const Matcher isSuccess = _IsSuccess();
 
-/// A matcher that verifies a [Result] is [Left].
+/// A matcher that verifies a [Result] is [Failure].
 ///
 /// ```dart
-/// expect(Left('error'), isLeft);
-/// expect(Right(42), isNot(isLeft));
+/// expect(Failure('error'), isFailure);
+/// expect(Success(42), isNot(isFailure));
 /// ```
-const Matcher isLeft = _IsLeft();
+const Matcher isFailure = _IsFailure();
 
-/// A matcher that verifies a [Result] is [Right] containing [value].
+/// A matcher that verifies a [Result] is [Success] containing [value].
 ///
 /// ```dart
-/// expect(Right(42), isRightWith(42));
-/// expect(Right('hello'), isRightWith('hello'));
+/// expect(Success(42), isSuccessWith(42));
+/// expect(Success('hello'), isSuccessWith('hello'));
 /// ```
-Matcher isRightWith(Object? value) => _IsRightWith(value);
+Matcher isSuccessWith(Object? value) => _IsSuccessWith(value);
 
-/// A matcher that verifies a [Result] is [Left] containing [value].
+/// A matcher that verifies a [Result] is [Failure] containing [value].
 ///
 /// ```dart
-/// expect(Left('error'), isLeftWith('error'));
+/// expect(Failure('error'), isFailureWith('error'));
 /// ```
-Matcher isLeftWith(Object? value) => _IsLeftWith(value);
+Matcher isFailureWith(Object? value) => _IsFailureWith(value);
 
 /// A matcher that verifies an [Option] is [Some].
 ///
@@ -59,16 +59,16 @@ Matcher isSomeWith(Object? value) => _IsSomeWith(value);
 
 // ─── Private Implementations ───────────────────────────────────────────
 
-class _IsRight extends Matcher {
-  const _IsRight();
+class _IsSuccess extends Matcher {
+  const _IsSuccess();
 
   @override
   bool matches(Object? item, Map<dynamic, dynamic> matchState) =>
-      item is Right;
+      item is Success;
 
   @override
   Description describe(Description description) =>
-      description.add('a Right instance');
+      description.add('a Success instance');
 
   @override
   Description describeMismatch(
@@ -77,24 +77,24 @@ class _IsRight extends Matcher {
     Map<dynamic, dynamic> matchState,
     bool verbose,
   ) {
-    if (item is Left) {
+    if (item is Failure) {
       return mismatchDescription
-          .add('is a Left with value: ')
+          .add('is a Failure with value: ')
           .addDescriptionOf(item.value);
     }
     return mismatchDescription.add('is not a Result instance');
   }
 }
 
-class _IsLeft extends Matcher {
-  const _IsLeft();
+class _IsFailure extends Matcher {
+  const _IsFailure();
 
   @override
-  bool matches(Object? item, Map<dynamic, dynamic> matchState) => item is Left;
+  bool matches(Object? item, Map<dynamic, dynamic> matchState) => item is Failure;
 
   @override
   Description describe(Description description) =>
-      description.add('a Left instance');
+      description.add('a Failure instance');
 
   @override
   Description describeMismatch(
@@ -103,26 +103,26 @@ class _IsLeft extends Matcher {
     Map<dynamic, dynamic> matchState,
     bool verbose,
   ) {
-    if (item is Right) {
+    if (item is Success) {
       return mismatchDescription
-          .add('is a Right with value: ')
+          .add('is a Success with value: ')
           .addDescriptionOf(item.value);
     }
     return mismatchDescription.add('is not a Result instance');
   }
 }
 
-class _IsRightWith extends Matcher {
+class _IsSuccessWith extends Matcher {
   final Object? _expected;
-  const _IsRightWith(this._expected);
+  const _IsSuccessWith(this._expected);
 
   @override
   bool matches(Object? item, Map<dynamic, dynamic> matchState) =>
-      item is Right && item.value == _expected;
+      item is Success && item.value == _expected;
 
   @override
   Description describe(Description description) => description
-      .add('a Right with value: ')
+      .add('a Success with value: ')
       .addDescriptionOf(_expected);
 
   @override
@@ -132,31 +132,31 @@ class _IsRightWith extends Matcher {
     Map<dynamic, dynamic> matchState,
     bool verbose,
   ) {
-    if (item is Right) {
+    if (item is Success) {
       return mismatchDescription
-          .add('is a Right but with value: ')
+          .add('is a Success but with value: ')
           .addDescriptionOf(item.value);
     }
-    if (item is Left) {
+    if (item is Failure) {
       return mismatchDescription
-          .add('is a Left with value: ')
+          .add('is a Failure with value: ')
           .addDescriptionOf(item.value);
     }
     return mismatchDescription.add('is not a Result instance');
   }
 }
 
-class _IsLeftWith extends Matcher {
+class _IsFailureWith extends Matcher {
   final Object? _expected;
-  const _IsLeftWith(this._expected);
+  const _IsFailureWith(this._expected);
 
   @override
   bool matches(Object? item, Map<dynamic, dynamic> matchState) =>
-      item is Left && item.value == _expected;
+      item is Failure && item.value == _expected;
 
   @override
   Description describe(Description description) => description
-      .add('a Left with value: ')
+      .add('a Failure with value: ')
       .addDescriptionOf(_expected);
 
   @override
@@ -166,14 +166,14 @@ class _IsLeftWith extends Matcher {
     Map<dynamic, dynamic> matchState,
     bool verbose,
   ) {
-    if (item is Left) {
+    if (item is Failure) {
       return mismatchDescription
-          .add('is a Left but with value: ')
+          .add('is a Failure but with value: ')
           .addDescriptionOf(item.value);
     }
-    if (item is Right) {
+    if (item is Success) {
       return mismatchDescription
-          .add('is a Right with value: ')
+          .add('is a Success with value: ')
           .addDescriptionOf(item.value);
     }
     return mismatchDescription.add('is not a Result instance');
