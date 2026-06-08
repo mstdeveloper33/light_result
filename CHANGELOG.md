@@ -1,3 +1,9 @@
+## 0.2.1
+
+* Expanded Dart SDK support to `>=3.0.0 <4.0.0`.
+* Relaxed the `lints` development dependency to support the wider SDK range.
+* Excluded local progress notes and generated files from published archives.
+
 ## 0.2.0 — Breaking: Success/Failure Rename
 
 ### Breaking Changes

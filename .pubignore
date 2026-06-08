@@ -1,0 +1,28 @@
+# Local-only files
+/PROGRESS.local.md
+
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.svn/
+migrate_working_dir/
+
+# IDE files
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# Dart/Pub generated files
+/pubspec.lock
+**/doc/api/
+.dart_tool/
+.flutter-plugins-dependencies
+/build/
+/coverage/

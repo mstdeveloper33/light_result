@@ -75,7 +75,7 @@ final avatar = await fetchUser(1)
 
 ```yaml
 dependencies:
-  light_result: ^0.2.0
+  light_result: ^0.2.1
 ```
 
 ## Quick Start
